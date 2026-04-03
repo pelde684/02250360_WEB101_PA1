@@ -1,0 +1,285 @@
+/* ==================== */
+/* MOVIE CARD STYLES */
+/* ==================== */
+
+/* Card Container */
+.movie-card-container {
+  position: relative;
+  min-width: 200px;
+  height: 300px;
+  transition: all 0.3s ease;
+  z-index: 1;
+}
+
+.movie-card-container.hovered {
+  transform: scale(1.2);
+  z-index: 100;
+  height: auto;
+  min-height: 350px;
+}
+
+/* Base Movie Card */
+.movie-card {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  background: #141414;
+}
+
+.movie-card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: all 0.3s ease;
+}
+
+/* Expanded View on Hover */
+.movie-card-expanded {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: #141414;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.expanded-preview {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  overflow: hidden;
+}
+
+.expanded-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.preview-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.8));
+}
+
+/* Expanded Movie Info */
+.movie-info-expanded {
+  padding: 1rem;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.8rem;
+}
+
+.action-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: rgba(42, 42, 42, 0.8);
+  border: 1px solid #808080;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.8rem;
+}
+
+.action-btn:hover {
+  background-color: #ffffff;
+  color: #000000;
+  transform: scale(1.05);
+}
+
+.play-btn {
+  background-color: #ffffff;
+  color: #000000;
+  border: none;
+}
+
+.play-btn:hover {
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+.dropdown-btn {
+  margin-left: auto;
+}
+
+/* Movie Meta Information */
+.movie-meta-expanded {
+  display: flex;
+  gap: 0.8rem;
+  align-items: center;
+  margin-bottom: 0.8rem;
+  font-size: 0.8rem;
+}
+
+.match {
+  color: #46d369;
+  font-weight: bold;
+}
+
+.year, .hd {
+  color: #ddd;
+}
+
+.hd {
+  border: 1px solid #ddd;
+  padding: 0.1rem 0.3rem;
+  font-size: 0.7rem;
+}
+
+/* Genres */
+.movie-genres {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.8rem;
+  font-size: 0.75rem;
+  color: #ddd;
+}
+
+.movie-genres span {
+  color: #999;
+}
+
+.movie-genres span:not(:last-child):after {
+  content: "•";
+  margin-left: 0.5rem;
+  color: #666;
+}
+
+/* Description Preview */
+.movie-description-preview {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: #ddd;
+  margin-bottom: 0.5rem;
+}
+
+/* Non-Hover Overlay */
+.movie-card-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+  padding: 1rem 0.5rem 0.5rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.movie-card-container:hover .movie-card-overlay {
+  opacity: 1;
+}
+
+.movie-card-info {
+  color: white;
+}
+
+.movie-title {
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+  font-weight: 500;
+}
+
+.movie-badges {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.match-badge {
+  color: #46d369;
+  font-size: 0.7rem;
+  font-weight: bold;
+}
+
+.hd-badge {
+  color: #ddd;
+  font-size: 0.7rem;
+  border: 1px solid #ddd;
+  padding: 0.1rem 0.3rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .movie-card-container {
+    min-width: 150px;
+    height: 225px;
+  }
+  
+  .movie-card-container.hovered {
+    transform: scale(1.1);
+  }
+  
+  .expanded-preview {
+    height: 140px;
+  }
+  
+  .movie-info-expanded {
+    padding: 0.5rem;
+  }
+  
+  .action-buttons {
+    gap: 0.3rem;
+  }
+  
+  .action-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 0.7rem;
+  }
+  
+  .movie-title {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .movie-card-container {
+    min-width: 120px;
+    height: 180px;
+  }
+  
+  .movie-card-container.hovered {
+    transform: scale(1.05);
+  }
+  
+  .expanded-preview {
+    height: 110px;
+  }
+  
+  .movie-meta-expanded,
+  .movie-genres,
+  .movie-description-preview {
+    font-size: 0.65rem;
+  }
+  
+  .action-btn {
+    width: 24px;
+    height: 24px;
+  }
+}

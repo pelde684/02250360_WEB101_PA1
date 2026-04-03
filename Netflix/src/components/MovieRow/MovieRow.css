@@ -1,0 +1,116 @@
+/* ==================== */
+/* MOVIE ROW STYLES */
+/* ==================== */
+
+.movie-row {
+  margin-bottom: 2rem;
+  padding: 0 4%;
+}
+
+.movie-row-title {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+.movie-row-container {
+  position: relative;
+}
+
+.movie-row-list {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  padding: 0.5rem 0;
+}
+
+/* Custom Scrollbar */
+.movie-row-list::-webkit-scrollbar {
+  height: 8px;
+}
+
+.movie-row-list::-webkit-scrollbar-track {
+  background: #333;
+  border-radius: 4px;
+}
+
+.movie-row-list::-webkit-scrollbar-thumb {
+  background: #666;
+  border-radius: 4px;
+}
+
+.movie-row-list::-webkit-scrollbar-thumb:hover {
+  background: #888;
+}
+
+/* Scroll Buttons */
+.scroll-button {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgba(0, 0, 0, 0.6);
+  border: none;
+  color: white;
+  width: 40px;
+  height: 100px;
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  opacity: 0;
+  border-radius: 4px;
+}
+
+.movie-row-container:hover .scroll-button {
+  opacity: 1;
+}
+
+.scroll-button:hover {
+  background-color: rgba(0, 0, 0, 0.9);
+  transform: translateY(-50%) scale(1.05);
+}
+
+.scroll-left {
+  left: 0;
+}
+
+.scroll-right {
+  right: 0;
+}
+
+/* Tablet Responsive */
+@media (max-width: 768px) {
+  .movie-row-title {
+    font-size: 1.2rem;
+  }
+  
+  .scroll-button {
+    width: 30px;
+    height: 80px;
+  }
+  
+  .scroll-button {
+    opacity: 1;
+    background-color: rgba(0, 0, 0, 0.4);
+  }
+}
+
+/* Mobile Responsive */
+@media (max-width: 480px) {
+  .movie-row {
+    padding: 0 2%;
+  }
+  
+  .movie-row-title {
+    font-size: 1rem;
+  }
+  
+  .scroll-button {
+    width: 25px;
+    height: 60px;
+  }
+}

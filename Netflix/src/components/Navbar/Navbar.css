@@ -1,0 +1,402 @@
+/* ==================== */
+/* NAVBAR COMPONENT STYLES */
+/* ==================== */
+
+/* Main Navbar Container */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0));
+  transition: all 0.3s ease;
+  padding: 0.5rem 0;
+}
+
+/* Scrolled state - solid background */
+.navbar.scrolled {
+  background-color: #141414;
+}
+
+/* Inner Container */
+.nav-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 4%;
+  max-width: 100%;
+}
+
+/* Left Section */
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 2.5rem;
+}
+
+/* Logo Styles */
+.logo {
+  cursor: pointer;
+}
+
+.logo h1 {
+  color: #e50914;
+  font-size: 1.8rem;
+  font-weight: bold;
+  letter-spacing: -1px;
+  margin: 0;
+}
+
+/* Desktop Navigation Links */
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.nav-link {
+  background: none;
+  border: none;
+  color: #e5e5e5;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: color 0.3s ease;
+  padding: 0.25rem 0;
+  font-family: inherit;
+}
+
+.nav-link:hover {
+  color: #ffffff;
+}
+
+.nav-link.active {
+  color: #ffffff;
+  font-weight: 500;
+}
+
+/* Right Section - Icons */
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  position: relative;
+}
+
+.nav-icon {
+  color: #ffffff;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.nav-icon:hover {
+  color: #e5e5e5;
+}
+
+/* ==================== */
+/* SEARCH BAR STYLES */
+/* ==================== */
+.search-container {
+  display: flex;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.8);
+  border: 1px solid #808080;
+  border-radius: 4px;
+  overflow: hidden;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.search-input {
+  background: none;
+  border: none;
+  color: white;
+  padding: 0.5rem 1rem;
+  width: 200px;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.search-input::placeholder {
+  color: #808080;
+}
+
+.search-submit {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+}
+
+/* ==================== */
+/* PROFILE MENU STYLES */
+/* ==================== */
+.profile-menu-container {
+  position: relative;
+}
+
+.profile-trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.profile-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  background-color: #808080;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1rem;
+}
+
+.profile-caret {
+  font-size: 0.8rem;
+  transition: transform 0.3s ease;
+}
+
+.profile-caret.open {
+  transform: rotate(180deg);
+}
+
+/* Profile Dropdown */
+.profile-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.5rem;
+  width: 280px;
+  background-color: rgba(0, 0, 0, 0.95);
+  border: 1px solid #333;
+  border-radius: 8px;
+  overflow: hidden;
+  animation: fadeInDown 0.3s ease;
+  z-index: 1000;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.profile-avatar-large {
+  width: 48px;
+  height: 48px;
+  border-radius: 4px;
+  background-color: #e50914;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+}
+
+.profile-info {
+  flex: 1;
+}
+
+.profile-name {
+  color: white;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.profile-email {
+  color: #808080;
+  font-size: 0.75rem;
+}
+
+.profile-divider {
+  height: 1px;
+  background-color: #333;
+  margin: 0.5rem 0;
+}
+
+.profile-option {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: none;
+  border: none;
+  color: #e5e5e5;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+  transition: background-color 0.2s ease;
+}
+
+.profile-option:hover {
+  background-color: #333;
+  color: white;
+}
+
+.profile-option-icon {
+  font-size: 1.1rem;
+}
+
+/* ==================== */
+/* MOBILE MENU STYLES */
+/* ==================== */
+.mobile-menu-btn {
+  display: none;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.8rem;
+  cursor: pointer;
+  padding: 0.25rem;
+}
+
+.mobile-menu {
+  display: none;
+  flex-direction: column;
+  background-color: #141414;
+  padding: 1rem 0;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 999;
+  border-top: 1px solid #333;
+}
+
+.mobile-link {
+  background: none;
+  border: none;
+  color: #ffffff;
+  padding: 0.8rem 1.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.mobile-link:hover {
+  background-color: #333;
+}
+
+.mobile-link.active {
+  color: #e50914;
+  font-weight: 500;
+}
+
+.mobile-divider {
+  height: 1px;
+  background-color: #333;
+  margin: 0.5rem 0;
+}
+
+/* ==================== */
+/* RESPONSIVE DESIGN */
+/* ==================== */
+
+/* Tablet Styles (768px - 992px) */
+@media (max-width: 992px) {
+  .nav-links {
+    gap: 1rem;
+  }
+  
+  .nav-link {
+    font-size: 0.85rem;
+  }
+  
+  .logo h1 {
+    font-size: 1.6rem;
+  }
+}
+
+/* Mobile Styles (under 768px) */
+@media (max-width: 768px) {
+  .nav-links {
+    display: none;
+  }
+  
+  .mobile-menu-btn {
+    display: block;
+  }
+  
+  .mobile-menu {
+    display: flex;
+  }
+  
+  .nav-left {
+    gap: 1rem;
+  }
+  
+  .logo h1 {
+    font-size: 1.4rem;
+  }
+  
+  .nav-right {
+    gap: 1rem;
+  }
+  
+  .search-input {
+    width: 150px;
+  }
+}
+
+/* Small Mobile (under 480px) */
+@media (max-width: 480px) {
+  .nav-container {
+    padding: 0.5rem 3%;
+  }
+  
+  .logo h1 {
+    font-size: 1.2rem;
+  }
+  
+  .nav-right {
+    gap: 0.8rem;
+  }
+  
+  .nav-icon {
+    font-size: 1rem;
+  }
+  
+  .search-input {
+    width: 100px;
+    font-size: 0.8rem;
+  }
+  
+  .profile-dropdown {
+    width: 250px;
+    right: -50px;
+  }
+}
