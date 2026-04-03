@@ -1,0 +1,9 @@
+During this assignment, I learned how to build a login form using React and Next.js. I used the React Hook Form library to handle form inputs and validation in a simpler and more efficient way. While working on the form, I understood how functions like register, handleSubmit, and errors work together to manage form data and show validation messages when users enter incorrect or missing information.
+
+I also added basic validation rules to make sure that the email and password fields cannot be left empty. This ensures that users must enter the required information before submitting the form. Through this process, I learned how to handle form submission and simulate a simple login action.
+
+Another important thing I learned was how to implement a loading state. By using useState, I was able to temporarily disable the login button and show a loading message when the form is submitted. This improves the user experience because it shows that the system is processing the request and prevents users from clicking the button multiple times.
+
+While completing this assignment, I faced a few challenges. At first, I placed the useState hook outside the component, which caused errors in the code. After reviewing the problem, I realized that React hooks must be used inside the component function, so I moved it inside the LoginPage function and the issue was fixed. I also had some trouble getting the login page to appear in the browser due to folder structure issues. After checking the file structure and restarting the development server, the page started working correctly.
+
+Overall, this assignment helped me understand how form handling works in React applications. It also showed me how React Hook Form makes it easier to manage form inputs and validation. Through this experience, I became more confident in creating interactive forms and handling user input in web development.
