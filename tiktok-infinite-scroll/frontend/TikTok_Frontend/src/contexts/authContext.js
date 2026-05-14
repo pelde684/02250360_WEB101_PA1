@@ -3,7 +3,7 @@
 import { createContext, useState, useContext, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '../lib/axios';
-import * as jwt_decode from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 import toast from 'react-hot-toast';
 
 const AuthContext = createContext();
@@ -20,14 +20,13 @@ export const AuthProvider = ({ children }) => {
     const token = localStorage.getItem('token');
     if (token) {
       try {
-        const decoded = jwt_decode(token);
+        const decoded = jwtDecode(token);
         // Check if token is expired
         if (decoded.exp * 1000 < Date.now()) {
           localStorage.removeItem('token');
           setUser(null);
         } else {
           setUser(decoded);
-          // Fetch user details
           fetchUserDetails(decoded.id);
         }
       } catch (error) {
@@ -51,7 +50,8 @@ export const AuthProvider = ({ children }) => {
   // Register a new user
   const register = async (userData) => {
     try {
-      const response = await apiClient.post('users/register', userData);
+      // ✅ Fixed: was 'users/register', backend route is 'auth/signup'
+      const response = await apiClient.post('/auth/signup', userData);
       toast.success('Registration successful! Please log in.');
       return response.data;
     } catch (error) {
@@ -64,13 +64,14 @@ export const AuthProvider = ({ children }) => {
   // Login user
   const login = async (credentials) => {
     try {
-      const response = await apiClient.post('users/login', credentials);
+      // ✅ Fixed: was 'users/login', backend route is 'auth/login'
+      const response = await apiClient.post('/auth/login', credentials);
       const { token, user } = response.data;
-      
+
       localStorage.setItem('token', token);
       setUser(user);
       toast.success('Login successful!');
-      
+
       return user;
     } catch (error) {
       const message = error.response?.data?.message || 'Login failed';

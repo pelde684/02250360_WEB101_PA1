@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../contexts/authContext';
 import { uploadVideoToStorage, uploadThumbnailToStorage, createVideo } from '../../services/uploadService';
 import toast from 'react-hot-toast';
-import { FaCloudUploadAlt, FaSpinner } from 'react-icons/fa';
 
-const UploadPage = () => {
+export default function UploadPage() {
   const { user, isAuthenticated } = useAuth();
   const router = useRouter();
   const [videoFile, setVideoFile] = useState(null);
@@ -16,13 +15,17 @@ const UploadPage = () => {
   const [thumbnailPreview, setThumbnailPreview] = useState(null);
   const [caption, setCaption] = useState('');
   const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStatus, setUploadStatus] = useState('');
   const videoInputRef = useRef(null);
   const thumbnailInputRef = useRef(null);
 
-  // Redirect if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push('/');
+    }
+  }, [isAuthenticated, router]);
+
   if (!isAuthenticated) {
-    router.push('/');
     return null;
   }
 
@@ -42,6 +45,7 @@ const UploadPage = () => {
 
     setVideoFile(file);
     setVideoPreview(URL.createObjectURL(file));
+    toast.success(`Selected: ${file.name}`);
   };
 
   const handleThumbnailChange = (e) => {
@@ -49,7 +53,7 @@ const UploadPage = () => {
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file for the thumbnail');
+      toast.error('Please select an image file');
       return;
     }
 
@@ -61,7 +65,7 @@ const UploadPage = () => {
     e.preventDefault();
 
     if (!videoFile) {
-      toast.error('Please select a video to upload');
+      toast.error('Please select a video');
       return;
     }
 
@@ -70,183 +74,144 @@ const UploadPage = () => {
       return;
     }
 
+    if (!user || !user.id) {
+      toast.error('User not found. Please login again.');
+      return;
+    }
+
     try {
       setUploading(true);
-      setUploadProgress(0);
       
-      // Step 1: Upload video directly to Supabase
-      const uploadToast = toast.loading('Uploading video... 0%');
+      // Step 1: Upload video
+      setUploadStatus('Uploading video to cloud...');
+      toast.loading('Uploading video...');
       
-      const videoUploadResult = await uploadVideoToStorage(user.id, videoFile);
-      setUploadProgress(50);
-      toast.loading('Uploading video... 50%', { id: uploadToast });
+      const videoResult = await uploadVideoToStorage(user.id, videoFile);
+      console.log('Video upload result:', videoResult);
       
-      let thumbnailUploadResult = null;
+      // Step 2: Upload thumbnail (if provided)
+      let thumbnailResult = null;
       if (thumbnailFile) {
-        thumbnailUploadResult = await uploadThumbnailToStorage(user.id, thumbnailFile);
+        setUploadStatus('Uploading thumbnail...');
+        thumbnailResult = await uploadThumbnailToStorage(user.id, thumbnailFile);
+        console.log('Thumbnail upload result:', thumbnailResult);
       }
       
-      setUploadProgress(75);
-      toast.loading('Uploading video... 75%', { id: uploadToast });
-      
-      // Step 2: Create video in the database with the Supabase URLs
+      // Step 3: Save to database
+      setUploadStatus('Saving video information...');
       const videoData = {
         caption,
-        videoUrl: videoUploadResult.url,
-        videoStoragePath: videoUploadResult.storagePath,
+        videoUrl: videoResult.url,
+        videoStoragePath: videoResult.storagePath,
+        thumbnailUrl: thumbnailResult?.url || null,
+        thumbnailStoragePath: thumbnailResult?.storagePath || null,
       };
-      
-      if (thumbnailUploadResult) {
-        videoData.thumbnailUrl = thumbnailUploadResult.url;
-        videoData.thumbnailStoragePath = thumbnailUploadResult.storagePath;
-      }
       
       await createVideo(videoData);
       
-      setUploadProgress(100);
-      toast.success('Video uploaded successfully!', { id: uploadToast });
-      router.push('/');
+      toast.success('Video uploaded successfully!');
+      setUploadStatus('');
+      
+      // Redirect after short delay
+      setTimeout(() => {
+        router.push('/');
+      }, 2000);
+      
     } catch (error) {
       console.error('Upload error:', error);
       toast.error(error.message || 'Failed to upload video');
+      setUploadStatus('');
     } finally {
       setUploading(false);
     }
   };
 
   return (
-    <div className="max-w-3xl mx-auto p-4">
-      <h1 className="mb-6 text-2xl font-bold">Upload Video</h1>
-
-      <div className="rounded-lg border border-gray-200 p-6">
-        <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Video upload area */}
-            <div className="flex flex-col">
-              <h2 className="text-lg font-semibold mb-2">Video</h2>
-              {videoPreview ? (
-                <div className="mb-4 aspect-video w-full overflow-hidden rounded-lg bg-black">
-                  <video
-                    src={videoPreview}
-                    className="h-full w-full object-contain"
-                    controls
-                  />
-                </div>
-              ) : (
-                <div
-                  onClick={() => videoInputRef.current?.click()}
-                  className="flex aspect-video w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100"
-                >
-                  <FaCloudUploadAlt size={48} className="mb-2 text-gray-400" />
-                  <p className="text-center text-gray-500">
-                    Click to upload a video
-                    <br />
-                    <span className="text-sm">MP4 or WebM (max 100MB)</span>
-                  </p>
-                </div>
-              )}
-              <input
-                type="file"
-                ref={videoInputRef}
-                onChange={handleVideoChange}
-                accept="video/*"
-                className="hidden"
-              />
-              {videoFile && (
-                <p className="mt-2 text-sm text-gray-500">
-                  Selected: {videoFile.name}
-                </p>
-              )}
-
-              {/* Thumbnail upload area */}
-              <h2 className="text-lg font-semibold mb-2 mt-6">Thumbnail (Optional)</h2>
-              {thumbnailPreview ? (
-                <div className="mb-4 aspect-video w-full overflow-hidden rounded-lg bg-gray-100">
-                  <img
-                    src={thumbnailPreview}
-                    alt="Thumbnail preview"
-                    className="h-full w-full object-contain"
-                  />
-                </div>
-              ) : (
-                <div
-                  onClick={() => thumbnailInputRef.current?.click()}
-                  className="flex aspect-video w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100"
-                >
-                  <FaCloudUploadAlt size={36} className="mb-2 text-gray-400" />
-                  <p className="text-center text-gray-500">
-                    Click to upload a thumbnail
-                    <br />
-                    <span className="text-sm">JPG, PNG or GIF</span>
-                  </p>
-                </div>
-              )}
-              <input
-                type="file"
-                ref={thumbnailInputRef}
-                onChange={handleThumbnailChange}
-                accept="image/*"
-                className="hidden"
-              />
-              {thumbnailFile && (
-                <p className="mt-2 text-sm text-gray-500">
-                  Selected: {thumbnailFile.name}
-                </p>
-              )}
-            </div>
-
-            {/* Video details */}
-            <div>
-              <div className="mb-4">
-                <label className="mb-1 block text-sm font-medium text-gray-700">
-                  Caption
-                </label>
-                <textarea
-                  value={caption}
-                  onChange={(e) => setCaption(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 p-2"
-                  rows="4"
-                  placeholder="What's this video about?"
-                  maxLength="150"
-                ></textarea>
-                <p className="mt-1 text-right text-xs text-gray-500">
-                  {caption.length}/150
-                </p>
+    <div className="max-w-4xl mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-6">Upload Video</h1>
+      
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Video Upload */}
+        <div>
+          <label className="block text-sm font-medium mb-2">Video *</label>
+          <div
+            onClick={() => videoInputRef.current?.click()}
+            className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-blue-500 transition"
+          >
+            {videoPreview ? (
+              <video src={videoPreview} className="max-h-64 mx-auto rounded" controls />
+            ) : (
+              <div>
+                <div className="text-4xl mb-2">🎥</div>
+                <p className="text-gray-500">Click to select video</p>
+                <p className="text-xs text-gray-400 mt-1">MP4, WebM (max 100MB)</p>
               </div>
-
-              {uploading && (
-                <div className="mb-4">
-                  <div className="w-full bg-gray-200 rounded-full h-2.5">
-                    <div 
-                      className="bg-blue-500 h-2.5 rounded-full" 
-                      style={{ width: `${uploadProgress}%` }}
-                    ></div>
-                  </div>
-                  <p className="mt-1 text-center text-xs text-gray-500">
-                    Uploading: {uploadProgress}%
-                  </p>
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={uploading || !videoFile}
-                className="w-full rounded-lg bg-blue-500 py-3 text-white hover:bg-blue-600 disabled:bg-blue-300"
-              >
-                {uploading ? (
-                  <span className="flex items-center justify-center">
-                    <FaSpinner className="mr-2 animate-spin" /> Uploading...
-                  </span>
-                ) : (
-                  'Post'
-                )}
-              </button>
-            </div>
+            )}
           </div>
-        </form>
-      </div>
+          <input
+            ref={videoInputRef}
+            type="file"
+            accept="video/*"
+            onChange={handleVideoChange}
+            className="hidden"
+          />
+        </div>
+
+        {/* Thumbnail Upload */}
+        <div>
+          <label className="block text-sm font-medium mb-2">Thumbnail (Optional)</label>
+          <div
+            onClick={() => thumbnailInputRef.current?.click()}
+            className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-blue-500 transition"
+          >
+            {thumbnailPreview ? (
+              <img src={thumbnailPreview} className="max-h-32 mx-auto rounded" alt="Thumbnail" />
+            ) : (
+              <div>
+                <div className="text-2xl mb-1">🖼️</div>
+                <p className="text-gray-500 text-sm">Click to select thumbnail</p>
+              </div>
+            )}
+          </div>
+          <input
+            ref={thumbnailInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleThumbnailChange}
+            className="hidden"
+          />
+        </div>
+
+        {/* Caption */}
+        <div>
+          <label className="block text-sm font-medium mb-2">Caption</label>
+          <textarea
+            value={caption}
+            onChange={(e) => setCaption(e.target.value)}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            rows="3"
+            placeholder="Write a caption..."
+            maxLength="150"
+          />
+          <p className="text-xs text-gray-400 mt-1 text-right">{caption.length}/150</p>
+        </div>
+
+        {/* Upload Status */}
+        {uploadStatus && (
+          <div className="p-3 bg-blue-50 rounded-lg">
+            <p className="text-sm text-blue-600">{uploadStatus}</p>
+          </div>
+        )}
+
+        {/* Submit Button */}
+        <button
+          type="submit"
+          disabled={uploading || !videoFile}
+          className="w-full bg-blue-500 text-white py-3 rounded-lg font-semibold hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition"
+        >
+          {uploading ? 'Uploading...' : 'Post Video'}
+        </button>
+      </form>
     </div>
   );
-};
-
-export default UploadPage;
+}

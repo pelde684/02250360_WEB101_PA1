@@ -1,186 +1,175 @@
 'use client';
-
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { getVideoById, addComment, getVideoComments } from '../../../services/videoService';
 import { useAuth } from '../../../contexts/authContext';
 import toast from 'react-hot-toast';
-import Link from 'next/link';
-import { FaHeart, FaRegHeart, FaUser } from 'react-icons/fa';
 
-export default function VideoDetailPage() {
-  const { videoId } = useParams();
-  const { user, isAuthenticated } = useAuth();
+// Add this URL resolver function at the top
+const resolveVideoUrl = (url) => {
+  if (!url) return null;
+  // If it's already a full URL
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  // If it's a Supabase storage path
+  if (url.includes('/storage/v1/object/')) return url;
+  // For local backend paths
+  return `http://localhost:5001${url.startsWith('/') ? url : `/${url}`}`;
+};
+
+export default function VideoPage() {
+  const params = useParams();
+  const videoId = params.videoId;
+  const { user } = useAuth();
   const [video, setVideo] = useState(null);
   const [comments, setComments] = useState([]);
-  const [commentText, setCommentText] = useState('');
+  const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchVideoData = async () => {
-      try {
-        setLoading(true);
-        const videoData = await getVideoById(videoId);
-        setVideo(videoData);
-        
-        const commentsData = await getVideoComments(videoId);
-        setComments(commentsData.comments || []);
-      } catch (error) {
-        console.error('Error fetching video data:', error);
-        toast.error('Failed to load video');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (videoId) {
-      fetchVideoData();
+      fetchVideo();
+      fetchComments();
     }
   }, [videoId]);
 
+  const fetchVideo = async () => {
+    try {
+      const data = await getVideoById(videoId);
+      setVideo(data);
+    } catch (error) {
+      console.error('Error fetching video:', error);
+      toast.error('Failed to load video');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchComments = async () => {
+    try {
+      const data = await getVideoComments(videoId);
+      setComments(data);
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+    }
+  };
+
   const handleAddComment = async (e) => {
     e.preventDefault();
-    
-    if (!isAuthenticated) {
-      toast.error('Please log in to comment');
+    if (!user) {
+      toast.error('Please login to comment');
       return;
     }
-    
-    if (!commentText.trim()) {
-      toast.error('Comment cannot be empty');
-      return;
-    }
-    
+    if (!newComment.trim()) return;
+
     try {
-      const newComment = await addComment(videoId, commentText);
-      setComments(prev => [newComment, ...prev]);
-      setCommentText('');
+      await addComment(videoId, newComment);
       toast.success('Comment added');
+      setNewComment('');
+      fetchComments();
     } catch (error) {
       console.error('Error adding comment:', error);
       toast.error('Failed to add comment');
     }
   };
 
-  const getFullVideoUrl = (url) => {
-    if (!url) return null;
-    
-    if (url.startsWith('http')) return url;
-    
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-    const serverUrl = baseUrl.includes('/api') 
-      ? baseUrl.substring(0, baseUrl.indexOf('/api')) 
-      : baseUrl;
-    
-    return `${serverUrl}${url}`;
-  };
-
-  if (loading) {
-    return (
-      <div className="flex justify-center py-10">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></div>
-      </div>
-    );
-  }
-
-  if (!video) {
-    return (
-      <div className="text-center py-10">
-        <p>Video not found</p>
-      </div>
-    );
-  }
+  if (loading) return <div className="flex justify-center items-center h-screen">Loading...</div>;
+  if (!video) return <div className="flex justify-center items-center h-screen">Video not found</div>;
 
   return (
     <div className="max-w-4xl mx-auto p-4">
-      <div className="flex flex-col md:flex-row gap-4">
-        {/* Video section */}
-        <div className="md:w-2/3">
-          <div className="bg-black rounded-lg overflow-hidden">
-            <video
-              src={getFullVideoUrl(video.videoUrl)}
-              controls
-              className="w-full h-auto max-h-[70vh] object-contain"
-              poster={video.thumbnailUrl ? getFullVideoUrl(video.thumbnailUrl) : null}
-            />
-          </div>
-          <div className="mt-4">
-            <Link href={`/profile/${video.user?.id}`} className="flex items-center gap-2">
-              <div className="h-10 w-10 rounded-full overflow-hidden bg-gray-200">
-                {video.user?.avatar ? (
-                  <img 
-                    src={getFullVideoUrl(video.user.avatar)} 
-                    alt={video.user.username}
-                    className="w-full h-full object-cover" 
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <FaUser className="text-gray-500" />
-                  </div>
-                )}
-              </div>
-              <div>
-                <p className="font-bold">{video.user?.username}</p>
-              </div>
-            </Link>
-            <p className="mt-2">{video.caption}</p>
-          </div>
-        </div>
+      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+        {/* Video Player */}
+        <video
+          src={resolveVideoUrl(video.videoUrl)}
+          className="w-full"
+          controls
+          autoPlay
+          playsInline
+          onError={(e) => {
+            console.error('Video failed to load:', video.videoUrl);
+            e.target.src = 'https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4';
+          }}
+        />
         
-        {/* Comments section */}
-        <div className="md:w-1/3 border rounded-lg">
-          <div className="p-4 border-b">
-            <h2 className="text-lg font-bold">Comments</h2>
-          </div>
-          
-          {/* Comment form */}
-          <div className="p-4 border-b">
-            <form onSubmit={handleAddComment} className="flex">
-              <input
-                type="text"
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                placeholder="Add a comment..."
-                className="flex-1 border rounded-l p-2"
-                disabled={!isAuthenticated}
+        {/* Video Info */}
+        <div className="p-4">
+          <div className="flex items-center gap-3 mb-3">
+            {/* Avatar - Fixed to use resolveVideoUrl or fallback */}
+            {video.user?.avatar ? (
+              <img
+                src={resolveVideoUrl(video.user.avatar)}
+                alt={video.user?.username}
+                className="w-10 h-10 rounded-full object-cover"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = '/default-avatar.svg';
+                }}
               />
-              <button
-                type="submit"
-                className="bg-blue-500 text-white px-4 py-2 rounded-r"
-                disabled={!isAuthenticated || !commentText.trim()}
-              >
-                Post
-              </button>
-            </form>
-          </div>
-          
-          {/* Comments list */}
-          <div className="p-4 overflow-y-auto max-h-[50vh]">
-            {comments.length > 0 ? (
-              comments.map((comment) => (
-                <div key={comment.id} className="mb-4 border-b pb-2">
-                  <div className="flex items-center gap-2">
-                    <div className="h-8 w-8 rounded-full overflow-hidden bg-gray-200">
-                      {comment.user?.avatar ? (
-                        <img 
-                          src={getFullVideoUrl(comment.user.avatar)} 
-                          alt={comment.user.username}
-                          className="w-full h-full object-cover" 
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <FaUser className="text-gray-500" />
-                        </div>
-                      )}
-                    </div>
-                    <span className="font-bold">{comment.user?.username}</span>
-                  </div>
-                  <p className="mt-1 ml-10">{comment.content}</p>
-                </div>
-              ))
             ) : (
-              <p className="text-center text-gray-500">No comments yet</p>
+              <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
+                <span className="text-gray-600 font-semibold">
+                  {video.user?.username?.charAt(0).toUpperCase() || 'U'}
+                </span>
+              </div>
             )}
+            <div>
+              <p className="font-semibold">@{video.user?.username}</p>
+              <p className="text-sm text-gray-500">{video.caption}</p>
+            </div>
+          </div>
+
+          {/* Comments Section */}
+          <div className="mt-6">
+            <h3 className="font-semibold mb-3">Comments ({comments.length})</h3>
+            
+            {/* Add Comment */}
+            {user && (
+              <form onSubmit={handleAddComment} className="flex gap-2 mb-4">
+                <input
+                  type="text"
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  placeholder="Add a comment..."
+                  className="flex-1 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <button
+                  type="submit"
+                  className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+                >
+                  Post
+                </button>
+              </form>
+            )}
+
+            {/* Comments List */}
+            <div className="space-y-3">
+              {comments.map((comment) => (
+                <div key={comment.id} className="flex gap-2">
+                  {/* Comment Avatar - Fixed */}
+                  {comment.user?.avatar ? (
+                    <img
+                      src={resolveVideoUrl(comment.user.avatar)}
+                      alt=""
+                      className="w-8 h-8 rounded-full object-cover"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = '/default-avatar.svg';
+                      }}
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
+                      <span className="text-gray-600 text-sm">
+                        {comment.user?.username?.charAt(0).toUpperCase() || 'U'}
+                      </span>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm font-semibold">@{comment.user?.username}</p>
+                    <p className="text-sm text-gray-700">{comment.content}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

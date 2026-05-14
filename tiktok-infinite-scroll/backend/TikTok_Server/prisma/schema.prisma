@@ -3,72 +3,70 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 model User {
-  id            String    @id @default(cuid())
-  username      String    @unique
-  email         String    @unique
-  password      String
-  profilePicture String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  
-  videos        Video[]
-  likes         Like[]
-  comments      Comment[]
-  followers     Follow[]   @relation("Following")
-  following     Follow[]   @relation("Follower")
+  id        Int       @id @default(autoincrement())
+  email     String    @unique
+  username  String    @unique
+  password  String
+  name      String?
+  bio       String?
+  avatar    String?
+  videos    Video[]
+  likes     Like[]
+  comments  Comment[]
+  followers Follow[]  @relation("follower")
+  following Follow[]  @relation("following")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 model Video {
-  id          String    @id @default(cuid())
-  title       String
-  description String?
-  videoUrl    String
-  thumbnailUrl String?
-  userId      String
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
-  user        User      @relation(fields: [userId], references: [id])
-  likes       Like[]
-  comments    Comment[]
+  id            Int       @id @default(autoincrement())
+  videoUrl      String
+  videoPath     String?
+  thumbnailUrl  String?
+  thumbnailPath String?
+  caption       String?
+  userId        Int
+  user          User      @relation(fields: [userId], references: [id])
+  likes         Like[]
+  comments      Comment[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
 
 model Like {
-  id        String   @id @default(cuid())
-  userId    String
-  videoId   String
-  createdAt DateTime @default(now())
-  
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  videoId   Int
   user      User     @relation(fields: [userId], references: [id])
   video     Video    @relation(fields: [videoId], references: [id])
-  
+  createdAt DateTime @default(now())
+
   @@unique([userId, videoId])
 }
 
 model Comment {
-  id        String   @id @default(cuid())
-  text      String
-  userId    String
-  videoId   String
-  createdAt DateTime @default(now())
-  
+  id        Int      @id @default(autoincrement())
+  content   String
+  userId    Int
+  videoId   Int
   user      User     @relation(fields: [userId], references: [id])
   video     Video    @relation(fields: [videoId], references: [id])
+  createdAt DateTime @default(now())
 }
 
 model Follow {
-  id          String   @id @default(cuid())
-  followerId  String
-  followingId String
+  id          Int      @id @default(autoincrement())
+  followerId  Int
+  followingId Int
+  follower    User     @relation("follower", fields: [followerId], references: [id])
+  following   User     @relation("following", fields: [followingId], references: [id])
   createdAt   DateTime @default(now())
-  
-  follower    User     @relation("Follower", fields: [followerId], references: [id])
-  following   User     @relation("Following", fields: [followingId], references: [id])
-  
+
   @@unique([followerId, followingId])
 }

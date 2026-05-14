@@ -1,29 +1,39 @@
 ﻿// src/lib/api-config.js
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+import axios from 'axios';
 
-const apiClient = async (endpoint, options = {}) => {
-  const token = localStorage.getItem('token');
-  
-  const headers = {
+const API_BASE_URL = 'http://localhost:5001'; // Changed to 5001
+
+const apiClient = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 60000,
+  headers: {
     'Content-Type': 'application/json',
-    ...options.headers,
-  };
-  
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+  },
+});
+
+// Add token to requests
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    console.log(`API Request: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Add response interceptor
+apiClient.interceptors.response.use(
+  (response) => {
+    console.log(`API Response: ${response.status} ${response.config.url}`);
+    return response;
+  },
+  (error) => {
+    console.error('API Error:', error.response?.status, error.response?.data || error.message);
+    return Promise.reject(error);
   }
-  
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
-  
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.error || `HTTP error! status: ${response.status}`);
-  }
-  
-  return response.json();
-};
+);
 
 export default apiClient;

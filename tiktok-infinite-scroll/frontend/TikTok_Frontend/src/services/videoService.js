@@ -1,70 +1,22 @@
+// src/services/videoService.js
 import apiClient from '../lib/api-config';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-
-// Helper to fix video URL
-export const getFullVideoUrl = (videoUrl) => {
-  if (!videoUrl) return null;
-  if (videoUrl.startsWith('http')) return videoUrl;
-  return `${BASE_URL}/${videoUrl.replace(/^\//, '')}`;
-};
-
-export const getVideos = async ({ cursor = null, limit = 10 }) => {
+export const getVideos = async (page = 1, limit = 10) => {
   try {
-    const params = { limit };
-    if (cursor) params.cursor = cursor;
-
-    const response = await apiClient.get('/api/videos', { params });
-
-    const videos = (response.data.videos || []).map((video) => ({
-      ...video,
-      videoUrl: getFullVideoUrl(video.videoUrl),
-    }));
-
-    return {
-      videos,
-      nextCursor: response.data.nextCursor || null,
-      hasNextPage: response.data.hasNextPage || false,
-    };
+    const response = await apiClient.get(`/api/videos?page=${page}&limit=${limit}`);
+    return response.data;
   } catch (error) {
     console.error('Error fetching videos:', error);
     throw error;
   }
 };
 
-export const getFollowingVideos = async ({ cursor = null, limit = 10 }) => {
+export const getFollowingVideos = async (limit = 10) => {
   try {
-    const params = { limit };
-    if (cursor) params.cursor = cursor;
-
-    const response = await apiClient.get('/api/videos/following', { params });
-
-    const videos = (response.data.videos || []).map((video) => ({
-      ...video,
-      videoUrl: getFullVideoUrl(video.videoUrl),
-    }));
-
-    return {
-      videos,
-      nextCursor: response.data.nextCursor || null,
-      hasNextPage: response.data.hasNextPage || false,
-    };
+    const response = await apiClient.get(`/api/videos/following?limit=${limit}`);
+    return response.data;
   } catch (error) {
     console.error('Error fetching following videos:', error);
-    throw error;
-  }
-};
-
-export const getUserVideos = async (userId) => {
-  try {
-    const response = await apiClient.get(`/api/users/${userId}/videos`);
-    const videos = (response.data || []).map((video) => ({
-      ...video,
-      videoUrl: getFullVideoUrl(video.videoUrl),
-    }));
-    return videos;
-  } catch (error) {
-    console.error('Error fetching user videos:', error);
     throw error;
   }
 };
@@ -72,22 +24,20 @@ export const getUserVideos = async (userId) => {
 export const getVideoById = async (id) => {
   try {
     const response = await apiClient.get(`/api/videos/${id}`);
-    return {
-      ...response.data,
-      videoUrl: getFullVideoUrl(response.data.videoUrl),
-    };
+    return response.data;
   } catch (error) {
     console.error('Error fetching video:', error);
     throw error;
   }
 };
 
-export const createVideo = async (videoData) => {
+// ADD THIS FUNCTION - Fix for profile page
+export const getUserVideos = async (userId, page = 1, limit = 10) => {
   try {
-    const response = await apiClient.post('/api/videos', videoData);
+    const response = await apiClient.get(`/api/users/${userId}/videos?page=${page}&limit=${limit}`);
     return response.data;
   } catch (error) {
-    console.error('Error creating video:', error);
+    console.error('Error fetching user videos:', error);
     throw error;
   }
 };
@@ -108,6 +58,26 @@ export const unlikeVideo = async (videoId) => {
     return response.data;
   } catch (error) {
     console.error('Error unliking video:', error);
+    throw error;
+  }
+};
+
+export const getVideoComments = async (videoId) => {
+  try {
+    const response = await apiClient.get(`/api/videos/${videoId}/comments`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching comments:', error);
+    throw error;
+  }
+};
+
+export const addComment = async (videoId, content) => {
+  try {
+    const response = await apiClient.post(`/api/videos/${videoId}/comments`, { content });
+    return response.data;
+  } catch (error) {
+    console.error('Error adding comment:', error);
     throw error;
   }
 };
