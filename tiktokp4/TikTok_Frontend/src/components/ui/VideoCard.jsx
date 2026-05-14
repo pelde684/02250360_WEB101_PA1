@@ -13,54 +13,44 @@ const VideoCard = ({ video }) => {
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(video.likeCount || 0);
   const [videoError, setVideoError] = useState(false);
-  const videoRef = useRef(null);
   const [isMuted, setIsMuted] = useState(true);
+  const videoRef = useRef(null);
 
   const getFullVideoUrl = (url) => {
     if (!url) return null;
-    
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      return url;
-    }
-    
-    if (url.startsWith('/uploads/')) {
-      return `http://localhost:8000${url}`;
-    }
-    
-    return `http://localhost:8000/${url}`;
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    if (url.startsWith('/uploads/')) return `http://localhost:8000${url}`;
+    return `http://localhost:8000/uploads/${url}`;
   };
 
   const getFullThumbnailUrl = (url) => {
     if (!url) return null;
-    
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      return url;
-    }
-    
-    if (url.startsWith('/uploads/')) {
-      return `http://localhost:8000${url}`;
-    }
-    
-    return `http://localhost:8000/${url}`;
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    if (url.startsWith('/uploads/')) return `http://localhost:8000${url}`;
+    return `http://localhost:8000/uploads/${url}`;
   };
-  
+
+  // Clicking the video: toggle play AND unmute on first click
   const togglePlay = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-        setIsPlaying(false);
-      } else {
-        const playPromise = videoRef.current.play();
-        if (playPromise !== undefined) {
-          playPromise
-            .then(() => {
-              setIsPlaying(true);
-            })
-            .catch((error) => {
-              console.error("Error playing video:", error);
-            });
-        }
-      }
+    if (!videoRef.current) return;
+    if (isPlaying) {
+      videoRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      // Unmute on first manual play click
+      videoRef.current.muted = false;
+      setIsMuted(false);
+      videoRef.current
+        .play()
+        .then(() => setIsPlaying(true))
+        .catch((err) => {
+          // If unmuted play fails, retry muted
+          videoRef.current.muted = true;
+          setIsMuted(true);
+          videoRef.current.play()
+            .then(() => setIsPlaying(true))
+            .catch(() => setIsPlaying(false));
+        });
     }
   };
 
@@ -77,7 +67,6 @@ const VideoCard = ({ video }) => {
       toast.error("Please log in to like videos");
       return;
     }
-
     try {
       if (isLiked) {
         await unlikeVideo(video.id);
@@ -94,64 +83,35 @@ const VideoCard = ({ video }) => {
     }
   };
 
+  // Autoplay muted when scrolled into view
   useEffect(() => {
-    if (!videoRef.current) return;
-
-    let isPaused = false;
-    let timeoutId = null;
+    const videoEl = videoRef.current;
+    if (!videoEl) return;
 
     const observer = new IntersectionObserver(
-      (entries) => {
-        const [entry] = entries;
-        
+      ([entry]) => {
         if (entry.isIntersecting) {
-          if (timeoutId) clearTimeout(timeoutId);
-          
-          timeoutId = setTimeout(() => {
-            if (videoRef.current && !isPaused && videoRef.current.readyState >= 3) {
-              const playPromise = videoRef.current.play();
-              if (playPromise !== undefined) {
-                playPromise
-                  .then(() => {
-                    setIsPlaying(true);
-                  })
-                  .catch((error) => {
-                    console.error("Autoplay prevented:", error);
-                    setIsPlaying(false);
-                  });
-              }
-            }
-          }, 100);
+          // Always autoplay muted (browser requirement)
+          videoEl.muted = true;
+          setIsMuted(true);
+          videoEl
+            .play()
+            .then(() => setIsPlaying(true))
+            .catch(() => setIsPlaying(false));
         } else {
-          if (videoRef.current) {
-            isPaused = true;
-            videoRef.current.pause();
-            setIsPlaying(false);
-            setTimeout(() => {
-              isPaused = false;
-            }, 200);
-          }
+          videoEl.pause();
+          setIsPlaying(false);
         }
       },
       { threshold: 0.5 }
     );
 
-    const currentVideo = videoRef.current;
-    if (currentVideo) {
-      observer.observe(currentVideo);
-    }
-
-    return () => {
-      if (currentVideo) {
-        observer.unobserve(currentVideo);
-      }
-      if (timeoutId) clearTimeout(timeoutId);
-    };
+    observer.observe(videoEl);
+    return () => observer.unobserve(videoEl);
   }, []);
 
-  const handleVideoError = (e) => {
-    console.error("Video failed to load:", video.videoUrl);
-    console.error("Full URL attempted:", getFullVideoUrl(video.videoUrl));
+  const handleVideoError = () => {
+    console.error("Video failed to load. URL tried:", getFullVideoUrl(video.videoUrl));
     setVideoError(true);
   };
 
@@ -174,10 +134,7 @@ const VideoCard = ({ video }) => {
 
       <div className="flex-1">
         <div className="mb-3">
-          <Link
-            href={`/profile/${video.user?.id}`}
-            className="font-semibold hover:underline"
-          >
+          <Link href={`/profile/${video.user?.id}`} className="font-semibold hover:underline">
             {video.user?.username}
           </Link>
           <p className="mt-1">{video.caption}</p>
@@ -194,54 +151,59 @@ const VideoCard = ({ video }) => {
               <>
                 <video
                   ref={videoRef}
+                  src={videoUrl}
                   onClick={togglePlay}
-                  className="h-full w-full object-contain"
+                  className="h-full w-full object-contain cursor-pointer"
                   loop
                   muted={isMuted}
                   playsInline
-                  preload="metadata"
+                  preload="auto"
                   poster={thumbnailUrl || undefined}
                   onError={handleVideoError}
-                  crossOrigin="anonymous"
-                >
-                  <source src={videoUrl} type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
+                />
 
-                <button 
+                {/* Mute button */}
+                <button
                   onClick={toggleMute}
-                  className="absolute bottom-4 right-4 bg-black bg-opacity-50 rounded-full p-2 text-white hover:bg-opacity-75 transition-all z-10"
+                  className="absolute bottom-4 right-4 z-10 rounded-full bg-black bg-opacity-60 p-2 text-white transition-all hover:bg-opacity-90"
                   aria-label={isMuted ? "Unmute" : "Mute"}
                 >
                   {isMuted ? <FaVolumeMute size={20} /> : <FaVolumeUp size={20} />}
                 </button>
 
+                {/* Tap to unmute hint — shows when muted and playing */}
+                {isMuted && isPlaying && (
+                  <div className="absolute bottom-14 right-2 z-10 rounded-full bg-black bg-opacity-60 px-3 py-1 text-xs text-white">
+                    Tap video for sound
+                  </div>
+                )}
+
+                {/* Play button overlay — shows when paused */}
                 {!isPlaying && (
-                  <div 
+                  <div
                     className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform cursor-pointer"
                     onClick={togglePlay}
                   >
-                    <div className="rounded-full bg-black bg-opacity-50 p-4 hover:bg-opacity-75 transition-all">
-                      <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z"/>
+                    <div className="rounded-full bg-black bg-opacity-50 p-4 transition-all hover:bg-opacity-75">
+                      <svg className="h-8 w-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z" />
                       </svg>
                     </div>
                   </div>
                 )}
               </>
             ) : (
-              <div className="flex h-full w-full flex-col items-center justify-center bg-black text-white p-4 text-center">
+              <div className="flex h-full w-full flex-col items-center justify-center bg-black p-4 text-center text-white">
                 <p className="mb-2">Video unavailable</p>
                 <p className="text-sm text-gray-400">Unable to load video</p>
                 {video.videoUrl && (
-                  <p className="text-xs text-gray-500 mt-2 break-all">
-                    {video.videoUrl}
-                  </p>
+                  <p className="mt-2 break-all text-xs text-gray-500">{video.videoUrl}</p>
                 )}
               </div>
             )}
           </div>
 
+          {/* Action buttons */}
           <div className="flex flex-col items-center justify-end space-y-4">
             <button
               onClick={handleLike}
@@ -249,24 +211,21 @@ const VideoCard = ({ video }) => {
                 isLiked ? "text-red-500" : "hover:text-red-500"
               }`}
             >
-              <div className="rounded-full bg-gray-100 p-3 hover:bg-gray-200 transition-colors">
+              <div className="rounded-full bg-gray-100 p-3 transition-colors hover:bg-gray-200">
                 <FaHeart size={20} />
               </div>
               <span className="mt-1 text-xs">{likeCount}</span>
             </button>
 
-            <Link
-              href={`/video/${video.id}`}
-              className="flex flex-col items-center group"
-            >
-              <div className="rounded-full bg-gray-100 p-3 group-hover:bg-gray-200 transition-colors">
+            <Link href={`/video/${video.id}`} className="group flex flex-col items-center">
+              <div className="rounded-full bg-gray-100 p-3 transition-colors group-hover:bg-gray-200">
                 <FaComment size={20} />
               </div>
               <span className="mt-1 text-xs">{video.commentCount || 0}</span>
             </Link>
 
-            <button className="flex flex-col items-center group">
-              <div className="rounded-full bg-gray-100 p-3 group-hover:bg-gray-200 transition-colors">
+            <button className="group flex flex-col items-center">
+              <div className="rounded-full bg-gray-100 p-3 transition-colors group-hover:bg-gray-200">
                 <FaShare size={20} />
               </div>
               <span className="mt-1 text-xs">Share</span>
